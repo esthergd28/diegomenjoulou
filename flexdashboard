@@ -1,85 +1,40 @@
 ---
-title: "flexdashboard: Shiny Embedding"
-output: 
-  flexdashboard::flex_dashboard:
-    social: menu
-    source_code: embed 
+title: "Old Faithful Eruptions"
+output: flexdashboard::flex_dashboard
 runtime: shiny
 ---
 
 ```{r global, include=FALSE}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
 library(datasets)
-data(WorldPhones)
+data(faithful)
 ```
 
-Module
-=======================================================================
+Column {.sidebar}
+-----------------------------------------------------------------------
 
-### Embedding a Shiny Module
-
-```{r, include=FALSE}
-# Shiny module definition (would typically be defined in a separate R script)
-
-# UI function
-worldPhonesUI <- function(id) {
-  ns <- NS(id)
-  fillCol(height = 600, flex = c(NA, 1), 
-    inputPanel(
-      selectInput(ns("region"), "Region:", choices = colnames(WorldPhones))
-    ),
-    plotOutput(ns("phonePlot"), height = "100%")
-  )
-}
-
-# Server function
-worldPhones <- function(input, output, session) {
-  output$phonePlot <- renderPlot({
-    barplot(WorldPhones[,input$region]*1000, 
-            ylab = "Number of Telephones", xlab = "Year")
-  })
-}
-```
+Waiting time between eruptions and the duration of the eruption for the
+Old Faithful geyser in Yellowstone National Park, Wyoming, USA.
 
 ```{r}
-# Include the module
-worldPhonesUI("phones")
-callModule(worldPhones, "phones")
+selectInput("n_breaks", label = "Number of bins:",
+            choices = c(10, 20, 35, 50), selected = 20)
+
+sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+            min = 0.2, max = 2, value = 1, step = 0.2)
 ```
 
-Inline App
-=======================================================================
+Column
+-----------------------------------------------------------------------
 
-### Inline Shiny App via shinyApp
-
-```{r}
-shinyApp(
-  ui = fillPage(
-    fillCol(flex = c(NA, 1), 
-      inputPanel(
-        selectInput("region", "Region:", choices = colnames(WorldPhones))
-      ),
-      plotOutput("phonePlot", height = "100%")
-    )
-  ),
-  server = function(input, output) {
-    output$phonePlot <- renderPlot({
-      barplot(WorldPhones[,input$region]*1000, 
-              ylab = "Number of Telephones", xlab = "Year")
-    })
-  },
-  options = list(height = 600)
-)
-```
-
-External App
-=======================================================================
-
-### External Shiny App via shinyAppDir
+### Geyser Eruption Duration
 
 ```{r}
-shinyAppDir(
-  system.file("examples/06_tabsets", package="shiny"),
-  options = list(height=850)
-)
+renderPlot({
+  hist(faithful$eruptions, probability = TRUE, breaks = as.numeric(input$n_breaks),
+       xlab = "Duration (minutes)", main = "Geyser Eruption Duration")
+  
+  dens <- density(faithful$eruptions, adjust = input$bw_adjust)
+  lines(dens, col = "blue")
+})
 ```
